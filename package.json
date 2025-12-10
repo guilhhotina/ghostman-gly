@@ -1,0 +1,10 @@
+{
+  "types": "index.d.ts",
+  "main": "src/game.lua",
+  "scripts": {
+    "build": "gly-cli build-html src/game.lua"
+  },
+  "devDependencies": {
+    "@gamely/gly-cli": "^0.3.7"
+  }
+}
