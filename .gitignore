@@ -1,0 +1,15 @@
+# logs e sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# build outputs
+dist/
+cli.lua
+
+# dependencias baixadas
+vendor/
+node_modules/
+
+# luacov
+luacov.*
