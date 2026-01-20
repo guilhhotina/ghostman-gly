@@ -1,159 +1,143 @@
--- critter ai (the prey)
--- controls the critter's ai
--- decides where to move based on: ghost distance, dots, dread tiles, courage, etc
--- uses a scoring system to pick the best direction
+-- AI do critter (presa)
+-- otimizado: reusa tables, BFS com pool, scoring simplificado
 
-local const = require('src/const')
+local C = require('src/const')
 
--- bfs to find shortest path to target
--- returns the first direction of the shortest path
-local function bfs_find_path(start_x, start_y, target_x, target_y, grid)
-    local vectors = const.vectors
-    local dirs = { 2, 3, 4, 5 }
-    local h = #grid
-    local w = #grid[1]
+-- pools pre-alocados
+local _queue = {}
+local _visited = {}
+local _neighbors = {}
 
-    -- queue of positions to explore: {{x, y, path_dir}, ...}
-    local queue = {}
-    local visited = {}
+-- helper pro grid 1D
+local function grid_get(G, x, y)
+    if x < 1 or x > G.w or y < 1 or y > G.h then return C.T_WALL end
+    return G.grid[(y - 1) * G.w + x]
+end
 
-    -- start with 4 directions from current pos
-    for _, d in ipairs(dirs) do
-        local vec = vectors[d]
-        local nx, ny = start_x + vec.x, start_y + vec.y
+-- BFS pra pathfinding direto (brave mode)
+local function bfs_path(sx, sy, tx, ty, G)
+    -- limpa pools
+    for k in pairs(_visited) do _visited[k] = nil end
+
+    local w, h = G.w, G.h
+    local dirs = { C.D_UP, C.D_DOWN, C.D_LEFT, C.D_RIGHT }
+    local head, tail = 1, 0
+
+    -- seed inicial
+    for i = 1, 4 do
+        local v = C.vectors[dirs[i]]
+        local nx, ny = sx + v.x, sy + v.y
+        local key = ny * 1000 + nx
 
         if nx >= 1 and nx <= w and ny >= 1 and ny <= h then
-            if grid[ny][nx] ~= const.tile.wall then
-                table.insert(queue, { x = nx, y = ny, first_dir = d, steps = 1 })
-                visited[nx .. "," .. ny] = true
+            if grid_get(G, nx, ny) ~= C.T_WALL and not _visited[key] then
+                _visited[key] = true
+                tail = tail + 1
+                _queue[tail] = { x = nx, y = ny, d = dirs[i], s = 1 }
             end
         end
     end
 
-    local head = 1
-    while head <= #queue do
-        local current = queue[head]
+    while head <= tail do
+        local cur = _queue[head]
         head = head + 1
 
-        -- found target!
-        if current.x == target_x and current.y == target_y then
-            return current.first_dir
+        if cur.x == tx and cur.y == ty then
+            return cur.d
         end
 
-        -- cap depth to avoid infinite loops on big maps
-        if current.steps > 100 then
-            goto continue
-        end
+        if cur.s > 80 then goto continue end
 
-        -- explore neighbors
-        for _, d in ipairs(dirs) do
-            local vec = vectors[d]
-            local nx, ny = current.x + vec.x, current.y + vec.y
-            local key = nx .. "," .. ny
+        for i = 1, 4 do
+            local v = C.vectors[dirs[i]]
+            local nx, ny = cur.x + v.x, cur.y + v.y
+            local key = ny * 1000 + nx
 
             if nx >= 1 and nx <= w and ny >= 1 and ny <= h then
-                if grid[ny][nx] ~= const.tile.wall and not visited[key] then
-                    visited[key] = true
-                    table.insert(queue, {
-                        x = nx,
-                        y = ny,
-                        first_dir = current.first_dir,
-                        steps = current.steps + 1
-                    })
+                if grid_get(G, nx, ny) ~= C.T_WALL and not _visited[key] then
+                    _visited[key] = true
+                    tail = tail + 1
+                    _queue[tail] = { x = nx, y = ny, d = cur.d, s = cur.s + 1 }
                 end
             end
         end
 
         ::continue::
     end
-
-    -- no path found, keep current direction
     return nil
 end
 
--- main think function
--- called every frame to decide next move
-local function think(me, ghost, grid, std, context)
-    context = context or {}
-    local brave = context.brave or false
-    local dread_tiles = context.dread_tiles or {}
+-- funcao principal de IA
+local function think(me, ghost, G, std, ctx)
+    ctx = ctx or {}
+    local brave = ctx.brave or false
+    local dread = ctx.dread_tiles
 
-    -- brave mode: use bfs for direct pathfinding
+    -- brave: pathfinding direto pro player
     if brave then
-        local path_dir = bfs_find_path(me.x, me.y, ghost.x, ghost.y, grid)
-        if path_dir then
-            me.next_dir = path_dir
+        local d = bfs_path(me.x, me.y, ghost.x, ghost.y, G)
+        if d then
+            me.next_dir = d
             return
         end
-        -- if bfs fails, fall back to scoring
     end
 
-    -- normal mode: scoring system
+    -- modo normal: scoring
     local best_score = -999999
     local best_dir = me.curr_dir
-    local possible = { 2, 3, 4, 5 }
+    local dirs = { C.D_UP, C.D_DOWN, C.D_LEFT, C.D_RIGHT }
 
-    -- helpers
-    local function dot_danger(dx, dy)
-        local ghost_dist = math.abs(dx - ghost.x) + math.abs(dy - ghost.y)
-        if ghost_dist < 3 then return 100 end
-        if ghost_dist < 5 then return 50 end
-        return 0
-    end
+    for i = 1, 4 do
+        local d = dirs[i]
+        local v = C.vectors[d]
+        local tx, ty = me.x + v.x, me.y + v.y
+        local tile = grid_get(G, tx, ty)
 
-    local function has_dread(x, y)
-        local key = x .. "," .. y
-        return dread_tiles[key] ~= nil
-    end
-
-    for _, d in ipairs(possible) do
-        local vec = const.vectors[d]
-        local tx, ty = me.x + vec.x, me.y + vec.y
-        local row = grid[ty]
-
-        if row and row[tx] ~= const.tile.wall then
+        if tile ~= C.T_WALL then
             local score = 0
-            local dist = math.abs(tx - ghost.x) + math.abs(ty - ghost.y)
+            local gdx, gdy = tx - ghost.x, ty - ghost.y
+            local gdist = math.abs(gdx) + math.abs(gdy)
 
-            -- scared mode
-            if dist < 8 then
-                score = score - (10 - dist) * 20
+            -- foge do ghost
+            if gdist < 8 then
+                score = score - (10 - gdist) * 20
             else
                 score = score + 10
             end
 
-            -- dread
-            if has_dread(tx, ty) then
-                score = score - 200
+            -- evita dread tiles
+            if dread then
+                local key = tx .. "," .. ty
+                if dread[key] then
+                    score = score - 200
+                end
             end
 
-            -- dots
-            local tile = row[tx]
-            if tile == const.tile.dot then
-                local danger = dot_danger(tx, ty)
+            -- busca dots
+            if tile == C.T_DOT then
+                local danger = 0
+                if gdist < 3 then danger = 100
+                elseif gdist < 5 then danger = 50 end
                 score = score + (100 - danger)
-            elseif tile == const.tile.fading then
+            elseif tile == C.T_FADING then
                 score = score + 150
             end
 
-            -- keep going same direction
+            -- prefere mesma direcao
             if d == me.curr_dir then
                 score = score + 12
             end
 
-            -- opposite direction
-            local opposite = { [2] = 3, [3] = 2, [4] = 5, [5] = 4 }
-            if d == opposite[me.curr_dir] then
+            -- evita voltar
+            local opp = { [C.D_UP] = C.D_DOWN, [C.D_DOWN] = C.D_UP, [C.D_LEFT] = C.D_RIGHT, [C.D_RIGHT] = C.D_LEFT }
+            if d == opp[me.curr_dir] then
                 score = score - 25
             end
 
             -- look ahead
-            local tx2, ty2 = tx + vec.x, ty + vec.y
-            local row2 = grid[ty2]
-            if row2 and row2[tx2] ~= const.tile.wall then
-                if row2[tx2] == const.tile.dot then
-                    score = score + 20
-                end
+            local t2 = grid_get(G, tx + v.x, ty + v.y)
+            if t2 == C.T_DOT then
+                score = score + 20
             end
 
             -- randomness
