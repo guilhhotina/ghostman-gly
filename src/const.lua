@@ -1,0 +1,88 @@
+local P = {
+    input = {
+        cooldown = 150
+    },
+    smooth = {
+        actor_lerp = 0.18,
+        actor_lerp_fast = 0.28,
+        camera_lerp = 0.08,
+        camera_lerp_zoom = 0.04,
+        ui_lerp = 0.12,
+        bob_speed = 0.008,
+        bob_amplitude = 2.5,
+        shake_decay = 0.06
+    },
+    balance = {
+        dot_fade_start = 15000,
+        dot_fade_interval = 2000,
+        idle_threshold = 2000,
+        base_critter_speed = 155,
+        speed_per_level = 6,
+        courage_speed_bonus = 25
+    },
+    state = {
+        menu = 0,
+        play = 1,
+        gameover = 2,
+        upgrade = 3,
+        capture = 4,
+        evolution = 5,
+        credits = 6
+    },
+    tile = { empty = 0, wall = 1, dot = 2, fading = 3 },
+    dir = { none = 1, up = 2, down = 3, left = 4, right = 5 },
+    vectors = {
+        { x = 0,  y = 0 },
+        { x = 0,  y = -1 },
+        { x = 0,  y = 1 },
+        { x = -1, y = 0 },
+        { x = 1,  y = 0 }
+    },
+    pal = {
+        bg = 0x0a0a1aFF,
+        bg_alt = 0x0f0f24FF,
+        wall_top = 0x4a4a6aFF,
+        wall_side = 0x2a2a40FF,
+        blood = 0xFFD700FF,
+        blood_dry = 0xC6A700FF,
+        blood_stain = 0x886600FF,
+        blood_shine = 0xFFFFAAFF,
+        blood_splat = 0xFFD700AA,
+        ghost = 0x88eeffFF,
+        ghost_glow = 0x88eeff44,
+        ghost_eye = 0x1a1a2eFF,
+        ghost_pupil = 0x000000FF,
+        ghost_angry = 0xff6688FF,
+        critter = 0xff6666FF,
+        critter_dark = 0xcc3333FF,
+        critter_belly = 0xffaaaaFF,
+        critter_eye = 0xffffffFF,
+        critter_pupil = 0x000000FF,
+        critter_brave = 0xffaa44FF,
+        dot = 0xffd700FF,
+        dot_glow = 0xffd70066,
+        dot_fading = 0xff880088,
+        ui_bg = 0x1a1a2aEE,
+        ui_panel = 0x252540FF,
+        ui_border = 0xaa88ffFF,
+        ui_select = 0xff66aaFF,
+        ui_dim = 0x000000AA,
+        ui_shadow = 0x00000066,
+        ui_warning = 0xff4444FF,
+        ui_success = 0x44ff88FF,
+        text = 0xf0f0f0FF,
+        text_dim = 0x7080a0FF,
+        text_highlight = 0xffffaaFF,
+        ally_leapy = 0x66ff88FF,
+        ally_bursty = 0xffaa44FF,
+        shotgun_blast = 0xffffccFF,
+        perk_speed = 0x44ddffFF,
+        perk_ethereal = 0xaa66ffFF,
+        perk_fear = 0xff4488FF,
+        perk_vision = 0x88ff88FF,
+        perk_dash = 0xff8844FF,
+        perk_mark = 0xffff44FF,
+        perk_chains = 0x8888ffFF
+    }
+}
+return P
