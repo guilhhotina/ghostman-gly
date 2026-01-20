@@ -1,5 +1,5 @@
 -- dash perk: phantom dash
--- dahs 3 tiles instantaneamente, cooldown de 2s
+-- dash 3 tiles instantaneamente, cooldown de 2s
 
 local const = require('src/const')
 
@@ -23,24 +23,33 @@ return {
             local vec = const.vectors[p.curr_dir]
             local dash_dist = 3
 
-            local new_x = p.x + vec.x * dash_dist
-            local new_y = p.y + vec.y * dash_dist
+            -- garante inteiros pro grid
+            local cx = math.floor(p.x + 0.5)
+            local cy = math.floor(p.y + 0.5)
+
+            local new_x = cx + vec.x * dash_dist
+            local new_y = cy + vec.y * dash_dist
 
             -- clamp pra dentro do mapa (margem de 2 tiles)
             new_x = math.max(2, math.min(G.w - 1, new_x))
             new_y = math.max(2, math.min(G.h - 1, new_y))
 
-            -- wall check
-            if not p.wall_hack and G.grid[new_y] and G.grid[new_y][new_x] == const.tile.wall then
+            -- wall check CORRIGIDO (grid 1D)
+            local function is_wall(tx, ty)
+                if tx < 1 or tx > G.w or ty < 1 or ty > G.h then return true end
+                -- acesso 1D correto: (y-1)*w + x
+                return G.grid[(ty - 1) * G.w + tx] == const.T_WALL
+            end
+
+            if not p.wall_hack and is_wall(new_x, new_y) then
+                -- raycast reverso pra nao entrar na parede
                 for i = dash_dist - 1, 1, -1 do
-                    local check_x = p.x + vec.x * i
-                    local check_y = p.y + vec.y * i
-                    if check_x > 1 and check_x < G.w and check_y > 1 and check_y < G.h then
-                        if G.grid[check_y][check_x] ~= const.tile.wall then
-                            new_x = check_x
-                            new_y = check_y
-                            break
-                        end
+                    local check_x = cx + vec.x * i
+                    local check_y = cy + vec.y * i
+                    if not is_wall(check_x, check_y) then
+                        new_x = check_x
+                        new_y = check_y
+                        break
                     end
                 end
             end

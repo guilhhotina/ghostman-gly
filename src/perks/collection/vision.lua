@@ -4,8 +4,8 @@ local const = require('src/const')
 
 return {
     id = "vision",
-    name = "all-seeing eye",
-    desc = "zoom out da camera. ve o maze inteiro.",
+    name = "ALL-SEEYING EYE",
+    desc = "camera zoom-out. see the whole maze!",
     icon = "[o]",
     type = "passive",
     color = 0x88ff88FF,

@@ -57,8 +57,8 @@ end
 
 return {
     id = "shotgun",
-    name = "boomstick",
-    desc = "segure pra mira (pra move), solta pra fogo.",
+    name = "SHOTGUN",
+    desc = "hold to aim, release to shoot.",
     icon = "}-",
     type = "active",
     color = 0xffaa44FF,

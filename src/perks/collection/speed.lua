@@ -3,7 +3,7 @@
 return {
     id = "speed",
     name = "SPECTRAL HASTE",
-    desc = "Movement +25%. Stacks twice!",
+    desc = "movement +25%. stacks twice!",
     icon = ">>>",
     type = "passive",
     color = 0x44ddffFF,

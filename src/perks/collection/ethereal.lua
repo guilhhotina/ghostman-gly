@@ -3,7 +3,7 @@
 
 return {
     id = "wall",
-    name = "ethereal form",
+    name = "ETHEREAL FORM",
     desc = "phase through walls freely. ultimate mobility.",
     icon = "[#]",
     type = "passive",

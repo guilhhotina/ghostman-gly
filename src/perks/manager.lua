@@ -1,5 +1,5 @@
--- perks manager
--- gerencia a collection de perks e seleção de upgrades
+-- gerenciador de perks
+-- otimizado: evita criar tables novas
 
 local collection = {
     require('src/perks/collection/speed'),
@@ -13,73 +13,79 @@ local collection = {
     require('src/perks/collection/dread')
 }
 
--- retorna opções de perks pra mostrar na tela de upgrade
-local function get_options(std, count, player)
-    local options = {}
-    local pool = {}
+-- pool de opcoes (reusado)
+local _pool = {}
+local _options = {}
 
-    for i, p in ipairs(collection) do
-        local dominated = false
+-- retorna opcoes de perks
+local function get_options(std, count, player)
+    -- limpa pools
+    for i = 1, #_pool do _pool[i] = nil end
+    for i = 1, #_options do _options[i] = nil end
+
+    local pool_count = 0
+
+    for _, p in ipairs(collection) do
+        local skip = false
+
         if player then
-            -- ativos: evita ter o mesmo perk duas vezes
-            if p.type == "active" then
-                if player.actives then
-                    for _, active in ipairs(player.actives) do
-                        if active.id == p.id then dominated = true end
-                    end
+            if p.type == "active" and player.actives then
+                for _, a in ipairs(player.actives) do
+                    if a.id == p.id then skip = true; break end
                 end
             end
 
-            -- passivas: checa se ja tem
-            if p.id == "speed" and player.speed_mod <= -60 then dominated = true end
-            if p.id == "wall" and player.wall_hack then dominated = true end
-            if p.id == "fear" and player.has_fear_aura then dominated = true end
-            if p.id == "vision" and player.zoom_out then dominated = true end
-            if p.id == "mark" and player.has_mark then dominated = true end
-            if p.id == "dread" and player.has_dread then dominated = true end
+            if p.id == "speed" and player.speed_mod <= -60 then skip = true end
+            if p.id == "wall" and player.wall_hack then skip = true end
+            if p.id == "fear" and player.has_fear_aura then skip = true end
+            if p.id == "vision" and player.zoom_out then skip = true end
+            if p.id == "mark" and player.has_mark then skip = true end
+            if p.id == "dread" and player.has_dread then skip = true end
 
-            -- speed stack: permite ate -60
             if p.id == "speed" and player.speed_mod < 0 and player.speed_mod > -60 then
-                dominated = false
+                skip = false
             end
         end
-        if not dominated then
-            table.insert(pool, p)
+
+        if not skip then
+            pool_count = pool_count + 1
+            _pool[pool_count] = p
         end
     end
 
-    -- escolhe perks aleatorios
     for i = 1, count do
-        if #pool == 0 then break end
-        local idx = std.math.random(1, #pool)
-        idx = math.max(1, math.min(#pool, idx))
-        local perk = pool[idx]
+        if pool_count == 0 then break end
+
+        local idx = std.math.random(1, pool_count)
+        local perk = _pool[idx]
+
         if perk then
-            table.insert(options, perk)
-            table.remove(pool, idx)
+            _options[#_options + 1] = perk
+            _pool[idx] = _pool[pool_count]
+            _pool[pool_count] = nil
+            pool_count = pool_count - 1
         end
     end
 
-    return options
+    return _options
 end
 
--- aplica um perk no player
+-- aplica perk
 local function apply(perk, player)
     if perk.apply then
         perk.apply(player)
     end
 
-    -- perks ativos vao pro array de actives
     if perk.type == "active" then
         player.actives = player.actives or {}
 
-        -- se tem espaco, adiciona
-        -- se nao, remove o mais velho (fifo)
         if #player.actives < 3 then
-            table.insert(player.actives, perk)
+            player.actives[#player.actives + 1] = perk
         else
-            table.remove(player.actives, 1)
-            table.insert(player.actives, perk)
+            -- FIFO
+            player.actives[1] = player.actives[2]
+            player.actives[2] = player.actives[3]
+            player.actives[3] = perk
         end
     end
 end

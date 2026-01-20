@@ -4,7 +4,7 @@
 
 return {
     id = "fear",
-    name = "terror visage",
+    name = "TERROR VISAGE",
     desc = "freezes prey nearby. useless if they're brave!",
     icon = "(@)",
     type = "passive",
