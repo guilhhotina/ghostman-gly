@@ -1,13 +1,32 @@
+-- constantes do ghostman
+-- otimizado pra arm/mips, suponho q evite hashmap lookups
+--
+-- UML STATE MACHINE:
+-- ┌─────────┐
+-- │ MENU(0) │◄──────────────────────────┐
+-- └────┬────┘                           │
+--      │ start                          │ restart
+--      ▼                                │
+-- ┌─────────┐  death   ┌────────────┐   │
+-- │ PLAY(1) │─────────►│ GAMEOVER(2)│───┘
+-- └────┬────┘          └────────────┘
+--      │ capture
+--      ▼
+-- ┌──────────┐  timer  ┌───────────┐  select
+-- │CAPTURE(4)│────────►│ UPGRADE(3)│─────────┐
+-- └──────────┘         └───────────┘         │
+--      ▲                                     │
+--      └─────────────────────────────────────┘
+--
+-- TILE TYPES: 0=empty, 1=wall, 2=dot, 3=fading
+-- DIRECTIONS: 1=none, 2=up, 3=down, 4=left, 5=right
+
 local P = {
-    input = {
-        cooldown = 150
-    },
+    input = { cooldown = 100 },
     smooth = {
         actor_lerp = 0.18,
         actor_lerp_fast = 0.28,
         camera_lerp = 0.08,
-        camera_lerp_zoom = 0.04,
-        ui_lerp = 0.12,
         bob_speed = 0.008,
         bob_amplitude = 2.5,
         shake_decay = 0.06
@@ -18,35 +37,50 @@ local P = {
         idle_threshold = 2000,
         base_critter_speed = 155,
         speed_per_level = 6,
-        courage_speed_bonus = 25
+        courage_speed_bonus = 25,
+        ai_think_interval = 4  -- critter pensa a cada N frames
     },
-    state = {
-        menu = 0,
-        play = 1,
-        gameover = 2,
-        upgrade = 3,
-        capture = 4,
-        evolution = 5,
-        credits = 6
-    },
-    tile = { empty = 0, wall = 1, dot = 2, fading = 3 },
-    dir = { none = 1, up = 2, down = 3, left = 4, right = 5 },
+
+    -- states como inteiros (zero hashmap lookup)
+    S_MENU = 0,
+    S_PLAY = 1,
+    S_GAMEOVER = 2,
+    S_UPGRADE = 3,
+    S_CAPTURE = 4,
+    S_EVOLUTION = 5,
+    S_CREDITS = 6,
+    S_PAUSE = 7,
+
+    -- tiles como inteiros
+    T_EMPTY = 0,
+    T_WALL = 1,
+    T_DOT = 2,
+    T_FADING = 3,
+
+    -- directions como inteiros
+    D_NONE = 1,
+    D_UP = 2,
+    D_DOWN = 3,
+    D_LEFT = 4,
+    D_RIGHT = 5,
+
+    -- vetores pre-computados (array = O(1) lookup)
     vectors = {
-        { x = 0,  y = 0 },
-        { x = 0,  y = -1 },
-        { x = 0,  y = 1 },
-        { x = -1, y = 0 },
-        { x = 1,  y = 0 }
+        { x = 0, y = 0 },   -- 1: none
+        { x = 0, y = -1 },  -- 2: up
+        { x = 0, y = 1 },   -- 3: down
+        { x = -1, y = 0 },  -- 4: left
+        { x = 1, y = 0 }    -- 5: right
     },
+
+    -- paleta estilo NES (32 cores max)
     pal = {
         bg = 0x0a0a1aFF,
         bg_alt = 0x0f0f24FF,
         wall_top = 0x4a4a6aFF,
         wall_side = 0x2a2a40FF,
         blood = 0xFFD700FF,
-        blood_dry = 0xC6A700FF,
         blood_stain = 0x886600FF,
-        blood_shine = 0xFFFFAAFF,
         blood_splat = 0xFFD700AA,
         ghost = 0x88eeffFF,
         ghost_glow = 0x88eeff44,
@@ -73,16 +107,8 @@ local P = {
         text = 0xf0f0f0FF,
         text_dim = 0x7080a0FF,
         text_highlight = 0xffffaaFF,
-        ally_leapy = 0x66ff88FF,
-        ally_bursty = 0xffaa44FF,
-        shotgun_blast = 0xffffccFF,
-        perk_speed = 0x44ddffFF,
-        perk_ethereal = 0xaa66ffFF,
-        perk_fear = 0xff4488FF,
-        perk_vision = 0x88ff88FF,
-        perk_dash = 0xff8844FF,
-        perk_mark = 0xffff44FF,
         perk_chains = 0x8888ffFF
     }
 }
+
 return P
