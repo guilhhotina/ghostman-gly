@@ -1,67 +1,66 @@
--- tela de creditos do ghostman
--- mostra infos sobre o dev e agradecimentos
+-- creditos
 
-local const = require('src/const')
-local common = require('src/view/ui/common')
+local C = require('src/const')
+local fw = require('src/view/ui/framework')
 
-local P = {}
-
--- draw da tela de creditos
-function P.draw(std)
+local function draw(std)
     local sw, sh = std.app.width, std.app.height
 
-    -- painel de fundo
-    common.panel(std, sw / 2 - 200, sh / 2 - 180, 400, 360, const.pal.ui_bg, const.pal.ui_border)
+    fw.panel(std, { x = sw / 2 - 200, y = sh / 2 - 180, w = 400, h = 360 })
 
-    -- titulo
-    std.text.font_size(28)
-    std.draw.color(const.pal.ui_border)
-    local title_w = std.text.mensure("credits")
-    std.text.print(sw / 2 - title_w / 2, sh / 2 - 140, "credits")
+    fw.text(std, "credits", sw / 2, sh / 2 - 140, {
+        size = 28,
+        align = "center",
+        color = C.pal.ui_border
+    })
 
-    -- linha divisoria
-    std.draw.color(const.pal.ui_dim)
+    std.draw.color(C.pal.ui_dim)
     std.draw.rect(0, sw / 2 - 100, sh / 2 - 110, 200, 2)
 
-    -- desenvolvedor
-    std.text.font_size(14)
-    std.draw.color(const.pal.ui_select)
-    local dev_w = std.text.mensure("developed by")
-    std.text.print(sw / 2 - dev_w / 2, sh / 2 - 80, "developed by")
+    fw.text(std, "developed by", sw / 2, sh / 2 - 80, {
+        size = 14,
+        align = "center",
+        color = C.pal.ui_select
+    })
 
-    -- nome do dev
-    std.text.font_size(20)
-    std.draw.color(const.pal.text)
-    local guily_w = std.text.mensure("guilhhotina")
-    std.text.print(sw / 2 - guily_w / 2, sh / 2 - 55, "guilhhotina")
+    fw.text(std, "guilhhotina", sw / 2, sh / 2 - 55, {
+        size = 20,
+        align = "center",
+        color = C.pal.text
+    })
 
-    -- versao
-    std.text.font_size(12)
-    std.draw.color(const.pal.text_dim)
-    local v_w = std.text.mensure("v2.5.0")
-    std.text.print(sw / 2 - v_w / 2, sh / 2 - 25, "v2.5.0")
+    fw.text(std, "v2.6.0", sw / 2, sh / 2 - 25, {
+        size = 12,
+        align = "center",
+        color = C.pal.text_dim
+    })
 
-    -- linha divisoria 2
-    std.draw.color(const.pal.ui_dim)
+    std.draw.color(C.pal.ui_dim)
     std.draw.rect(0, sw / 2 - 80, sh / 2, 160, 2)
 
-    -- agradecimentos
-    std.text.font_size(14)
-    std.draw.color(const.pal.ui_border)
-    local thanks_w = std.text.mensure("special thanks")
-    std.text.print(sw / 2 - thanks_w / 2, sh / 2 + 20, "special thanks")
+    fw.text(std, "special thanks", sw / 2, sh / 2 + 20, {
+        size = 14,
+        align = "center",
+        color = C.pal.ui_border
+    })
 
-    -- msgs deagradecimento
-    std.text.font_size(12)
-    std.draw.color(const.pal.text_dim)
-    std.text.print(sw / 2 - 60, sh / 2 + 45, "you for playing!")
-    std.text.print(sw / 2 - 50, sh / 2 + 65, "donatello")
+    fw.text(std, "you for playing!", sw / 2, sh / 2 + 45, {
+        size = 12,
+        align = "center",
+        color = C.pal.text_dim
+    })
 
-    -- instrucao de volta ao menu
-    std.text.font_size(10)
-    std.draw.color(const.pal.text_dim)
-    local back_w = std.text.mensure("[a] back to menu")
-    std.text.print(sw / 2 - back_w / 2, sh / 2 + 130, "[a] back to menu")
+    fw.text(std, "donatello", sw / 2, sh / 2 + 65, {
+        size = 12,
+        align = "center",
+        color = C.pal.text_dim
+    })
+
+    fw.text(std, "[z] back to menu", sw / 2, sh / 2 + 130, {
+        size = 10,
+        align = "center",
+        color = C.pal.text_dim
+    })
 end
 
-return P
+return { draw = draw }

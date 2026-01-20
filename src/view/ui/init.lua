@@ -1,5 +1,4 @@
--- ui do ghostman
--- routing pra outras telas de ui
+-- UI routing
 
 local menu = require('src/view/ui/menu')
 local hud = require('src/view/ui/hud')
@@ -7,26 +6,31 @@ local upgrade = require('src/view/ui/upgrade')
 local gameover = require('src/view/ui/gameover')
 local evolution = require('src/view/ui/evolution')
 local credits = require('src/view/ui/credits')
-local const = require('src/const')
-local P = {}
+local pause = require('src/view/ui/pause')
+local C = require('src/const')
 
--- draw da ui baseado no estado do jogo
-function P.draw(std, G, fps_enabled)
+local function draw(std, G, fps)
     local s = G.state
-    if s == const.state.menu then
+
+    if s == C.S_MENU then
         menu.draw(std, G.menu_cursor)
-    elseif s == const.state.play then
-        hud.draw(std, G, fps_enabled)
-    elseif s == const.state.upgrade then
-        hud.draw(std, G, fps_enabled)
+    elseif s == C.S_PLAY then
+        hud.draw(std, G, fps)
+    elseif s == C.S_UPGRADE then
+        hud.draw(std, G, fps)
         upgrade.draw(std, G.upgrade_options, G.upgrade_cursor)
-    elseif s == const.state.gameover then
-        gameover.draw(std)
-    elseif s == const.state.evolution then
+    elseif s == C.S_GAMEOVER then
+        gameover.draw(std, G)
+    elseif s == C.S_EVOLUTION then
         evolution.draw(std, G.player)
-    elseif s == const.state.credits then
+    elseif s == C.S_CREDITS then
         credits.draw(std)
+    elseif s == C.S_PAUSE then
+        -- desenha o jogo por baixo (congelado) + hud
+        hud.draw(std, G, fps)
+        -- overlay de pause por cima
+        pause.draw(std, G)
     end
 end
 
-return P
+return { draw = draw }
